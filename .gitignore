@@ -1,7 +1,18 @@
-build
-socket.io-client-cpp
-vcpkg
-build_and_run.sh
-build_and_run.ps1
-CMakeLists.txt
-data
+# macOS build and config files
+build/
+.DS_Store
+
+# Windows build folders
+CMakeFiles/
+CMakeCache.txt
+
+# CLion or VSCode settings
+.vscode/
+.idea/
+
+# Compiled binaries
+*.exe
+*.out
+*.o
+*.obj
+*.log
