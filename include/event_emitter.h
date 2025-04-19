@@ -39,3 +39,5 @@ private:
     void processEventQueue();
     std::string getCurrentTimestamp();
 };
+
+// testing
