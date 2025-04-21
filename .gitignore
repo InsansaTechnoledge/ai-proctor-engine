@@ -1,0 +1,19 @@
+# macOS build and config files
+build/
+.DS_Store
+
+# Windows build folders
+CMakeFiles/
+CMakeCache.txt
+data
+
+# CLion or VSCode settings
+.vscode/
+.idea/
+
+# Compiled binaries
+*.exe
+*.out
+*.o
+*.obj
+*.log
