@@ -5,6 +5,7 @@ build/
 # Windows build folders
 CMakeFiles/
 CMakeCache.txt
+data
 
 # CLion or VSCode settings
 .vscode/
