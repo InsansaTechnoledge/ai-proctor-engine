@@ -6,6 +6,7 @@ build/
 CMakeFiles/
 CMakeCache.txt
 data
+socket.io-client-cpp
 
 # CLion or VSCode settings
 .vscode/
