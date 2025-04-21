@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#hi this is a test 
 # Define paths
 BUILD_DIR="build"
 TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake"
