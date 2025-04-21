@@ -1,3 +1,6 @@
+#ifdef _WIN32
+  #include <Windows.h>
+#endif
 #include "screen_monitor.h"
 #include "utils.h"
 #include <iostream>
