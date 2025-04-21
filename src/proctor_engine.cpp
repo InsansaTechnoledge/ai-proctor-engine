@@ -200,6 +200,7 @@ void ProctorEngine::monitorLoop() {
             // ✅ Face Detection - always log, emit on change
             int faceCount = faceDetector_->detectFaces();
             utils::log("Detected faces: " + std::to_string(faceCount));
+            
 
             if (faceCount != lastFaceCount) {
                 std::string details = (faceCount == 0) ? "No face detected"
@@ -250,6 +251,77 @@ void ProctorEngine::monitorLoop() {
         }
     }
 }
+
+// void ProctorEngine::monitorLoop() {
+//     int consecutiveFailures = 0;
+//     const int MAX_FAILURES = 5;
+//     int lastFaceCount = 1;
+//     std::string lastWindowTitle = screenMonitor_.getCurrentWindowTitle();
+
+//     // ⏱️ Timer start
+//     auto startTime = std::chrono::steady_clock::now();
+//     auto maxDuration = std::chrono::minutes(5); // or std::chrono::seconds(300);
+
+//     while (running_) {
+//         // ⏱️ Check timeout
+//         auto now = std::chrono::steady_clock::now();
+//         if (now - startTime >= maxDuration) {
+//             utils::log("⏹️ Proctor session timed out.");
+//             stop();
+//             break;
+//         }
+
+//         try {
+//             int faceCount = faceDetector_->detectFaces();
+//             utils::log("Detected faces: " + std::to_string(faceCount));
+
+//             if (faceCount != lastFaceCount) {
+//                 std::string details = (faceCount == 0) ? "No face detected"
+//                                       : (faceCount > 1) ? "Multiple faces detected: " + std::to_string(faceCount)
+//                                       : "Face detection normalized";
+
+//                 ProctorEvent faceEvent{userId_, examId_, "face_detection", utils::getCurrentTimestamp(), details};
+//                 lastFaceCount = faceCount;
+
+//                 if (eventEmitter_) {
+//                     eventEmitter_->emitEvent(faceEvent);
+//                     utils::log("📤 [Face JSON] " + utils::formatEventJson(
+//                         faceEvent.userId, faceEvent.examId, faceEvent.eventType, faceEvent.details));
+//                 }
+//             }
+
+//             std::string newTitle;
+//             if (screenMonitor_.detectScreenChange(newTitle)) {
+//                 utils::log("Active window changed from: " + lastWindowTitle + " → " + newTitle);
+//                 lastWindowTitle = newTitle;
+
+//                 ProctorEvent screenEvent{userId_, examId_, "window_change", utils::getCurrentTimestamp(), newTitle};
+//                 if (eventEmitter_) {
+//                     eventEmitter_->emitEvent(screenEvent);
+//                     utils::log("📤 [Window JSON] " + utils::formatEventJson(
+//                         screenEvent.userId, screenEvent.examId, screenEvent.eventType, screenEvent.details));
+//                 }
+//             }
+
+//             consecutiveFailures = 0;
+//             std::this_thread::sleep_for(std::chrono::seconds(1));
+//         }
+//         catch (const std::exception& e) {
+//             utils::log("Error in monitor loop: " + std::string(e.what()));
+//             if (++consecutiveFailures >= MAX_FAILURES) {
+//                 utils::log("Too many failures, restarting FaceDetector");
+//                 if (faceDetector_) {
+//                     faceDetector_->stopCapture();
+//                     faceDetector_->initialize();
+//                     faceDetector_->startCapture();
+//                 }
+//                 consecutiveFailures = 0;
+//             }
+//             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//         }
+//     }
+// }
+
 
 void ProctorEngine::handleGracefulShutdown() {
     stop();

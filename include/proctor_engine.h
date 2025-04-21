@@ -28,7 +28,7 @@ private:
     std::thread monitorThread_;
 
     std::unique_ptr<FaceDetector> faceDetector_;
-    ScreenMonitor screenMonitor_;  // ✅ Add screen monitor instance
+    ScreenMonitor screenMonitor_;  
 
     std::shared_ptr<EventEmitter> eventEmitter_;
 
