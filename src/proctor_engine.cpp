@@ -89,7 +89,8 @@ ProctorEngine::~ProctorEngine() {
 //     }
 // }
 
-bool ProctorEngine::initialize() {
+bool ProctorEngine::initialize(const std::string& binaryPath)
+ {
     try {
         utils::log("Initializing Proctor Engine...");
 
@@ -104,10 +105,11 @@ bool ProctorEngine::initialize() {
 
         // 2. Initialize Face Detector
         faceDetector_ = std::make_unique<FaceDetector>();
-        if (!faceDetector_->initialize()) {
+        if (!faceDetector_->initialize(binaryPath)) {
             utils::log("❌ Failed to initialize Face Detector");
             return false;
         }
+        
 
         // 3. Initialize Event Emitter (optional if not connected)
         // eventEmitter_ = std::make_shared<EventEmitter>(socketUrl_);
@@ -242,7 +244,7 @@ void ProctorEngine::monitorLoop() {
                 utils::log("Too many failures, restarting FaceDetector");
                 if (faceDetector_) {
                     faceDetector_->stopCapture();
-                    faceDetector_->initialize();
+                    faceDetector_->initialize(binaryPath_);
                     faceDetector_->startCapture();
                 }
                 consecutiveFailures = 0;

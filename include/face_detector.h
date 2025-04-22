@@ -11,7 +11,9 @@ public:
     FaceDetector();
     ~FaceDetector();
 
-    bool initialize();
+    // bool initialize();
+    bool initialize(const std::string& binaryPath);
+
     bool startCapture();
     void stopCapture();
     int detectFaces();               // Waits for new frame
