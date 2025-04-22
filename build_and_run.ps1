@@ -14,8 +14,26 @@ cmake --build . --config Release
 
 # Check if build succeeded
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "Running Proctor Engine..."
-    .\Release\proctor_engine.exe
+    Write-Host "Build successful!"
+
+    # Define source and destination for binary
+    $source = "./Release/proctor_engine.exe"
+    $destination = "../../gyapak-test-series/electron/bin/win/proctor_engine.exe"
+
+    # Create destination directory if needed
+    $destDir = Split-Path -Path $destination -Parent
+    if (-Not (Test-Path -Path $destDir)) {
+        New-Item -ItemType Directory -Path $destDir | Out-Null
+    }
+
+    # Copy the executable
+    Copy-Item -Path $source -Destination $destination -Force
+    Write-Host "Moved proctor_engine.exe to $destination"
+
+    # Optional: Run the engine
+    # Write-Host "Running Proctor Engine..."
+    # & $destination
+
     Set-Location ../
 } else {
     Write-Host "Build failed. Check above for errors."
