@@ -17,22 +17,26 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Build successful!"
 
     # Define source and destination for binary
-    $source = "./Release/proctor_engine.exe"
-    $destination = "../../gyapak-test-series/electron/bin/win/proctor_engine.exe"
+    # $source = "./Release/proctor_engine.exe"
+    # $destination = "../../gyapak-test-series/electron/bin/win/proctor_engine.exe"
 
-    # Create destination directory if needed
-    $destDir = Split-Path -Path $destination -Parent
-    if (-Not (Test-Path -Path $destDir)) {
-        New-Item -ItemType Directory -Path $destDir | Out-Null
-    }
+    # # Create destination directory if needed
+    # $destDir = Split-Path -Path $destination -Parent
+    # if (-Not (Test-Path -Path $destDir)) {
+    #     New-Item -ItemType Directory -Path $destDir | Out-Null
+    # }
 
     # Copy the executable
-    Copy-Item -Path $source -Destination $destination -Force
-    Write-Host "Moved proctor_engine.exe to $destination"
+    # Copy-Item -Path $source -Destination $destination -Force
+    # Write-Host "Moved proctor_engine.exe to $destination"
 
     # Optional: Run the engine
-    # Write-Host "Running Proctor Engine..."
+    Write-Host "Running Proctor Engine..."
     # & $destination
+
+    # proctor engine path relative from build
+    .\Release\proctor_engine.exe 67f6a65f334e40ba01ab2924 exam123 event456
+
 
     Set-Location ../
 } else {

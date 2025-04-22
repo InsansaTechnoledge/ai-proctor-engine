@@ -19,11 +19,23 @@ find_package(nlohmann_json CONFIG REQUIRED)
 
 # ✅ Optional: PortAudio support with fallback path
 option(USE_AUDIO "Enable microphone support with PortAudio" ON)
+
 if(USE_AUDIO)
-    # Manually include portaudio paths from Homebrew (macOS)
-    include_directories("/opt/homebrew/include")
-    link_directories("/opt/homebrew/lib")
-    set(PORTAUDIO_LIB "portaudio") # not portaudio_static
+    if(APPLE)
+        include_directories("/opt/homebrew/include")
+        link_directories("/opt/homebrew/lib")
+        set(PORTAUDIO_LIB "portaudio")
+    elseif(WIN32)
+        find_path(PORTAUDIO_INCLUDE_DIR portaudio.h PATHS "${CMAKE_SOURCE_DIR}/third_party/portaudio/include")
+        find_library(PORTAUDIO_LIBRARY NAMES portaudio PATHS "${CMAKE_SOURCE_DIR}/third_party/portaudio/lib")
+
+        if(PORTAUDIO_INCLUDE_DIR AND PORTAUDIO_LIBRARY)
+            include_directories(${PORTAUDIO_INCLUDE_DIR})
+            set(PORTAUDIO_LIB ${PORTAUDIO_LIBRARY})
+        else()
+            message(FATAL_ERROR "PortAudio not found. Please provide correct path or disable USE_AUDIO.")
+        endif()
+    endif()
 endif()
 
 # ✅ Collect all source files
@@ -70,9 +82,17 @@ if(WIN32)
     )
 endif()
 
-# ✅ Copy binary to Electron's bin/mac (optional)
-add_custom_command(TARGET proctor_engine POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:proctor_engine>
-        ${CMAKE_SOURCE_DIR}/../gyapak-test-series/electron/bin/mac/proctor_engine
-)
+# ✅ Copy binary (optional, adjust for platform)
+if(APPLE)
+    add_custom_command(TARGET proctor_engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:proctor_engine>
+            ${CMAKE_SOURCE_DIR}/../gyapak-test-series/electron/bin/mac/proctor_engine
+    )
+elseif(WIN32)
+    add_custom_command(TARGET proctor_engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:proctor_engine>
+            ${CMAKE_SOURCE_DIR}/../gyapak-test-series/electron/bin/win/proctor_engine.exe
+    )
+endif()
