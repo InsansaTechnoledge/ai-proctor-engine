@@ -5,6 +5,8 @@
 
 int main(int argc, char* argv[]) {
     try {
+        std::setvbuf(stdout, nullptr, _IONBF, 0); // Disable buffering
+
         std::cout << "✅ ProctorEngine CLI launched\n";
 
         // Print CLI arguments

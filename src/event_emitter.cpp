@@ -54,7 +54,9 @@ void EventEmitter::emitEvent(const ProctorEvent& event) {
         {"details", event.details}
     };
 
-    utils::log("📤 Emitting JSON Event:\n" + eventData.dump(4));
+    std::cout << eventData.dump() << std::endl; // <-- 🔥 IMPORTANT
+
+    // utils::log("📤 Emitting JSON Event:\n" + eventData.dump(4));
 }
 
 // void EventEmitter::processEventQueue() {

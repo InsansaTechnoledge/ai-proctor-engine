@@ -24,7 +24,13 @@ bool FaceDetector::initialize(const std::string& binaryPath) {
         std::filesystem::path execDir = std::filesystem::path(binaryPath).parent_path();
         utils::log("🧭 Binary located at: " + execDir.string());
 
-        std::string crossPlatformModelPath = _WIN32 ? "models" : "ai-proctor-engine/models";
+        // std::string crossPlatformModelPath = _WIN32 ? "models" : "ai-proctor-engine/models";
+        std::string crossPlatformModelPath;
+            #ifdef _WIN32
+                crossPlatformModelPath = "models";
+            #else
+                crossPlatformModelPath = "ai-proctor-engine/models";
+            #endif
 
         // Climb up from electron/bin/mac → electron/bin → electron → gyapak-test-series → ai-proctor-engine/models
         std::filesystem::path modelDir = execDir.parent_path().parent_path() / crossPlatformModelPath;

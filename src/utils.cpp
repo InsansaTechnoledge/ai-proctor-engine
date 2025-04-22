@@ -34,8 +34,14 @@ void configureLogHandler() {
     // Placeholder if you want to redirect logs to file in the future
 }
 
+// void log(const std::string& message) {
+//     std::cout << "[LOG] " << message << std::endl;
+// }
+
 void log(const std::string& message) {
     std::cout << "[LOG] " << message << std::endl;
+    std::cout.flush(); // 👈🏽 force flush to make sure logs reach Electron
 }
+
 
 } // namespace utils ✅ (This was missing in your previous error)
