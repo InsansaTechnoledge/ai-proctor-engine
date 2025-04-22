@@ -4,6 +4,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <filesystem>
 
 FaceDetector::FaceDetector() : isRunning_(false) {}
 
@@ -12,23 +13,53 @@ FaceDetector::~FaceDetector() {
     utils::log("🧹 FaceDetector destructor complete.");
 }
 
-bool FaceDetector::initialize() {
+#include <fstream>
+
+
+bool FaceDetector::initialize(const std::string& binaryPath) {
+    utils::log("🔥 [DEBUG] Entered FaceDetector::initialize()");
+
     try {
-        std::string basePath = "../models/";
-        std::string protoPath = basePath + "deploy.prototxt";
-        std::string modelPath = basePath + "res10_300x300_ssd_iter_140000.caffemodel";
+        // Start from where the binary is
+        std::filesystem::path execDir = std::filesystem::path(binaryPath).parent_path();
+        utils::log("🧭 Binary located at: " + execDir.string());
+
+        // Climb up from electron/bin/mac → electron/bin → electron → gyapak-test-series → ai-proctor-engine/models
+        std::filesystem::path modelDir = execDir.parent_path().parent_path() / "ai-proctor-engine/models";
+        modelDir = std::filesystem::weakly_canonical(modelDir);
+        utils::log("📂 Resolved model directory: " + modelDir.string());
+
+        std::string protoPath = (modelDir / "deploy.prototxt").string();
+        std::string modelPath = (modelDir / "res10_300x300_ssd_iter_140000.caffemodel").string();
+
+        utils::log("📂 Checking model files:");
+        utils::log("   Prototxt: " + protoPath);
+        utils::log("   CaffeModel: " + modelPath);
+
+        if (!std::filesystem::exists(protoPath)) {
+            utils::log("❌ Prototxt file NOT FOUND: " + protoPath);
+            return false;
+        }
+
+        if (!std::filesystem::exists(modelPath)) {
+            utils::log("❌ CaffeModel file NOT FOUND: " + modelPath);
+            return false;
+        }
+
+        utils::log("✅ Model files exist. Loading...");
 
         faceNet_ = cv::dnn::readNetFromCaffe(protoPath, modelPath);
 
         if (faceNet_.empty()) {
-            utils::log("❌ Could not load face detection model");
+            utils::log("❌ OpenCV failed to load the model (network is empty)");
             return false;
         }
 
-        utils::log("Face detection model loaded successfully");
+        utils::log("✅ Face detection model loaded successfully");
         return true;
+
     } catch (const std::exception& e) {
-        utils::log("Exception in faceDetector initialization: " + std::string(e.what()));
+        utils::log("❌ Exception in FaceDetector initialization: " + std::string(e.what()));
         return false;
     }
 }
@@ -53,6 +84,7 @@ bool FaceDetector::startCapture() {
         return false;
     }
 }
+
 
 void FaceDetector::stopCapture() {
     if (!isRunning_.exchange(false)) return;

@@ -14,7 +14,7 @@ public:
     ProctorEngine(const std::string& userId , const std::string& examId, const std::string& socketUrl);
     ~ProctorEngine();
 
-    bool initialize();
+    bool initialize(const std::string& binaryPath); // ✅ new
     void start();
     void stop();
     bool isRunning() const;
@@ -23,6 +23,8 @@ private:
     std::string userId_;
     std::string examId_;
     std::string socketUrl_;
+    std::string binaryPath_;  // ✅ ADD THIS LINE
+
     
     std::atomic<bool> running_;
     std::thread monitorThread_;
