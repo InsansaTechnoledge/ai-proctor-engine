@@ -454,20 +454,40 @@ void ProctorEngine::monitorLoop() {
     std::string lastWindowTitle = screenMonitor_.getCurrentWindowTitle();
     int lastFaceCount = 1;
 
+    // 👇 WARM-UP LOGIC
+    const int warmupFrames = 10;
+    int frameCounter = 0;
+    utils::log("🕒 Warming up camera...");
+
     while (running_) {
         try {
             int faceCount = faceDetector_->detectFaces();
-            utils::log("Detected faces: " + std::to_string(faceCount));
+            frameCounter++;
+
+            utils::log("Detected faces (frame " + std::to_string(frameCounter) + "): " + std::to_string(faceCount));
+
+            // ⏳ Skip event emission during warm-up
+            if (frameCounter <= warmupFrames) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                continue;
+            }
 
             if (faceCount != lastFaceCount) {
                 std::string details = (faceCount == 0) ? "No face detected"
                     : (faceCount > 1) ? "Multiple faces detected: " + std::to_string(faceCount)
                     : "Face detection normalized";
-
+            
+                // 👇 ADD THIS CHECK
+                if (details == "StatusIndicator") {
+                    utils::log("⚠️ Ignored frame: StatusIndicator");
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    continue;
+                }
+            
                 std::string eventType = (faceCount == 1) ? "info" : "anomaly";
                 ProctorEvent faceEvent{ userId_, examId_, eventType, utils::getCurrentTimestamp(), details };
                 lastFaceCount = faceCount;
-
+            
                 if (eventEmitter_) {
                     eventEmitter_->emitEvent(faceEvent);
                     utils::log("📤 [Face JSON] " + utils::formatEventJson(

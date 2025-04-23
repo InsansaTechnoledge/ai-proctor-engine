@@ -45,6 +45,11 @@ bool EventEmitter::isConnected() const
 
 void EventEmitter::emitEvent(const ProctorEvent &event)
 {
+    if (event.details == "StatusIndicator") {
+        utils::log("⛔ Blocked anomaly: StatusIndicator");
+        return;
+    }
+    
     {
         std::lock_guard<std::mutex> lock(eventQueueMutex_);
         eventQueue_.push(event);
