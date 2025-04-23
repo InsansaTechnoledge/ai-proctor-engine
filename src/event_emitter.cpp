@@ -6,17 +6,18 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 
-
 using json = nlohmann::json;
 
-EventEmitter::EventEmitter(const std::string& url)
+EventEmitter::EventEmitter(const std::string &url)
     : url_(url), connected_(false), running_(false) {}
 
-EventEmitter::~EventEmitter() {
+EventEmitter::~EventEmitter()
+{
     disconnect();
 }
 
-bool EventEmitter::connect() {
+bool EventEmitter::connect()
+{
     connected_ = true;
     running_ = true;
 
@@ -25,21 +26,25 @@ bool EventEmitter::connect() {
     return true;
 }
 
-void EventEmitter::disconnect() {
+void EventEmitter::disconnect()
+{
     running_ = false;
     connected_ = false;
 
-    if (eventThread_.joinable()) {
+    if (eventThread_.joinable())
+    {
         eventThread_.join();
         utils::log("🧵 EventEmitter thread joined.");
     }
 }
 
-bool EventEmitter::isConnected() const {
+bool EventEmitter::isConnected() const
+{
     return connected_;
 }
 
-void EventEmitter::emitEvent(const ProctorEvent& event) {
+void EventEmitter::emitEvent(const ProctorEvent &event)
+{
     {
         std::lock_guard<std::mutex> lock(eventQueueMutex_);
         eventQueue_.push(event);
@@ -51,8 +56,7 @@ void EventEmitter::emitEvent(const ProctorEvent& event) {
         {"examId", event.examId},
         {"eventType", event.eventType},
         {"timestamp", event.timestamp},
-        {"details", event.details}
-    };
+        {"details", event.details}};
 
     std::cout << eventData.dump() << std::endl; // <-- 🔥 IMPORTANT
     std::cout.flush();
@@ -89,13 +93,11 @@ void EventEmitter::emitEvent(const ProctorEvent& event) {
 //         };
 
 //         auto emitEnd = std::chrono::steady_clock::now();
-//         std::cout << "[EMIT THREAD] (" 
-//           << std::chrono::duration_cast<std::chrono::milliseconds>(emitEnd - emitStart).count() 
+//         std::cout << "[EMIT THREAD] ("
+//           << std::chrono::duration_cast<std::chrono::milliseconds>(emitEnd - emitStart).count()
 //           << "ms) " << eventData.dump(2) << std::endl;
 
-
 //         send_event_to_backend(url_, eventData);
-
 
 //         // std::cout << "[EMIT THREAD] " << eventData.dump(2) << std::endl;
 
@@ -104,21 +106,25 @@ void EventEmitter::emitEvent(const ProctorEvent& event) {
 //     }
 // }
 
-void EventEmitter::processEventQueue() {
-    while (running_) {
+void EventEmitter::processEventQueue()
+{
+    while (running_)
+    {
         ProctorEvent event;
         bool hasEvent = false;
 
         {
             std::lock_guard<std::mutex> lock(eventQueueMutex_);
-            if (!eventQueue_.empty()) {
+            if (!eventQueue_.empty())
+            {
                 event = eventQueue_.front();
                 eventQueue_.pop();
                 hasEvent = true;
             }
         }
 
-        if (!hasEvent) {
+        if (!hasEvent)
+        {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
@@ -130,18 +136,17 @@ void EventEmitter::processEventQueue() {
             {"examId", event.examId},
             {"eventType", event.eventType},
             {"timestamp", event.timestamp},
-            {"details", event.details}
-        };
+            {"details", event.details}};
 
         // 🔥 Send the JSON to backend over HTTP
-        std::cout<<"this is final data 😩" << eventData.dump();
+        std::cout << "this is final data 😩" << eventData.dump();
         std::cout.flush();
         send_event_to_backend(url_, eventData.dump());
 
         auto emitEnd = std::chrono::steady_clock::now();
-        std::cout << "[EMIT THREAD] (" 
-        << std::chrono::duration_cast<std::chrono::milliseconds>(emitEnd - emitStart).count() 
-        << "ms) " << eventData.dump(2) << std::endl;
-        std::cout.flush(); 
+        std::cout << "[EMIT THREAD] ("
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(emitEnd - emitStart).count()
+                  << "ms) " << eventData.dump(2) << std::endl;
+        std::cout.flush();
     }
 }
