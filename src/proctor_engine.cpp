@@ -447,6 +447,172 @@ void ProctorEngine::stop() {
 bool ProctorEngine::isRunning() const {
     return running_;
 }
+// dependent on face normalized event to work again 
+
+// void ProctorEngine::monitorLoop() {
+//     int consecutiveFailures = 0;
+//     const int MAX_FAILURES = 5;
+//     std::string lastWindowTitle = screenMonitor_.getCurrentWindowTitle();
+//     int lastFaceCount = 1;
+
+//     // 👇 WARM-UP LOGIC
+//     const int warmupFrames = 10;
+//     int frameCounter = 0;
+//     utils::log("🕒 Warming up camera...");
+
+//     while (running_) {
+//         try {
+//             int faceCount = faceDetector_->detectFaces();
+//             frameCounter++;
+
+//             utils::log("Detected faces (frame " + std::to_string(frameCounter) + "): " + std::to_string(faceCount));
+
+//             // ⏳ Skip event emission during warm-up
+//             if (frameCounter <= warmupFrames) {
+//                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//                 continue;
+//             }
+
+//             if (faceCount != lastFaceCount) {
+//                 std::string details = (faceCount == 0) ? "No face detected"
+//                     : (faceCount > 1) ? "Multiple faces detected: " + std::to_string(faceCount)
+//                     : "Face detection normalized";
+            
+//                 // 👇 ADD THIS CHECK
+//                 if (details == "StatusIndicator") {
+//                     utils::log("⚠️ Ignored frame: StatusIndicator");
+//                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//                     continue;
+//                 }
+            
+//                 std::string eventType = (faceCount == 1) ? "info" : "anomaly";
+//                 ProctorEvent faceEvent{ userId_, examId_, eventType, utils::getCurrentTimestamp(), details };
+//                 lastFaceCount = faceCount;
+            
+//                 if (eventEmitter_) {
+//                     eventEmitter_->emitEvent(faceEvent);
+//                     utils::log("📤 [Face JSON] " + utils::formatEventJson(
+//                         faceEvent.userId, faceEvent.examId, faceEvent.eventType, faceEvent.details));
+//                 }
+//             }
+
+//             std::string newTitle;
+//             if (screenMonitor_.detectScreenChange(newTitle)) {
+//                 utils::log("Active window changed from: " + lastWindowTitle + " → " + newTitle);
+//                 lastWindowTitle = newTitle;
+
+//                 ProctorEvent screenEvent{ userId_, examId_, "anomaly", utils::getCurrentTimestamp(), newTitle };
+//                 if (eventEmitter_) {
+//                     eventEmitter_->emitEvent(screenEvent);
+//                     utils::log("📤 [Window JSON] " + utils::formatEventJson(
+//                         screenEvent.userId, screenEvent.examId, screenEvent.eventType, screenEvent.details));
+//                 }
+//             }
+
+//             consecutiveFailures = 0;
+//             std::this_thread::sleep_for(std::chrono::seconds(1));
+//         } catch (const std::exception& e) {
+//             utils::log("Error in monitor loop: " + std::string(e.what()));
+//             if (++consecutiveFailures >= MAX_FAILURES) {
+//                 utils::log("Too many failures, restarting FaceDetector");
+//                 if (faceDetector_) {
+//                     faceDetector_->stopCapture();
+//                     faceDetector_->initialize(binaryPath_);
+//                     faceDetector_->startCapture();
+//                 }
+//                 consecutiveFailures = 0;
+//             }
+//             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//         }
+//     }
+// }
+
+// every frame is treaded equally so events re runs after every 5 sec
+
+// void ProctorEngine::monitorLoop() {
+//     int consecutiveFailures = 0;
+//     const int MAX_FAILURES = 5;
+//     std::string lastWindowTitle = screenMonitor_.getCurrentWindowTitle();
+//     int lastFaceCount = 1;
+
+//     const int warmupFrames = 10;
+//     int frameCounter = 0;
+//     utils::log("🕒 Warming up camera...");
+
+//     // 🔁 Cooldown trackers
+//     auto lastNoFaceTime = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+//     auto lastMultiFaceTime = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+//     auto lastWindowChangeTime = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+
+//     while (running_) {
+//         try {
+//             int faceCount = faceDetector_->detectFaces();
+//             frameCounter++;
+
+//             utils::log("Detected faces (frame " + std::to_string(frameCounter) + "): " + std::to_string(faceCount));
+
+//             if (frameCounter <= warmupFrames) {
+//                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//                 continue;
+//             }
+
+//             auto now = std::chrono::steady_clock::now();
+
+//             if (faceCount == 0) {
+//                 if (now - lastNoFaceTime >= std::chrono::seconds(5)) {
+//                     ProctorEvent faceEvent{userId_, examId_, "anomaly", utils::getCurrentTimestamp(), "No face detected"};
+//                     eventEmitter_->emitEvent(faceEvent);
+//                     utils::log("📤 [No Face JSON] " + utils::formatEventJson(
+//                         faceEvent.userId, faceEvent.examId, faceEvent.eventType, faceEvent.details));
+//                     lastNoFaceTime = now;
+//                 }
+//             } else if (faceCount > 1) {
+//                 if (now - lastMultiFaceTime >= std::chrono::seconds(5)) {
+//                     ProctorEvent faceEvent{userId_, examId_, "anomaly", utils::getCurrentTimestamp(),
+//                                            "Multiple faces detected: " + std::to_string(faceCount)};
+//                     eventEmitter_->emitEvent(faceEvent);
+//                     utils::log("📤 [Multi Face JSON] " + utils::formatEventJson(
+//                         faceEvent.userId, faceEvent.examId, faceEvent.eventType, faceEvent.details));
+//                     lastMultiFaceTime = now;
+//                 }
+//             } else {
+//                 lastFaceCount = 1; // normalized
+//             }
+
+//             std::string newTitle;
+//             if (screenMonitor_.detectScreenChange(newTitle)) {
+//                 auto now = std::chrono::steady_clock::now();
+//                 if (now - lastWindowChangeTime >= std::chrono::seconds(5)) {
+//                     utils::log("Active window changed from: " + lastWindowTitle + " → " + newTitle);
+//                     lastWindowTitle = newTitle;
+
+//                     ProctorEvent screenEvent{userId_, examId_, "anomaly", utils::getCurrentTimestamp(), newTitle};
+//                     eventEmitter_->emitEvent(screenEvent);
+//                     utils::log("📤 [Window JSON] " + utils::formatEventJson(
+//                         screenEvent.userId, screenEvent.examId, screenEvent.eventType, screenEvent.details));
+
+//                     lastWindowChangeTime = now;
+//                 }
+//             }
+
+//             consecutiveFailures = 0;
+//             std::this_thread::sleep_for(std::chrono::seconds(1));
+
+//         } catch (const std::exception& e) {
+//             utils::log("Error in monitor loop: " + std::string(e.what()));
+//             if (++consecutiveFailures >= MAX_FAILURES) {
+//                 utils::log("Too many failures, restarting FaceDetector");
+//                 if (faceDetector_) {
+//                     faceDetector_->stopCapture();
+//                     faceDetector_->initialize(binaryPath_);
+//                     faceDetector_->startCapture();
+//                 }
+//                 consecutiveFailures = 0;
+//             }
+//             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//         }
+//     }
+// }
 
 void ProctorEngine::monitorLoop() {
     int consecutiveFailures = 0;
@@ -454,7 +620,10 @@ void ProctorEngine::monitorLoop() {
     std::string lastWindowTitle = screenMonitor_.getCurrentWindowTitle();
     int lastFaceCount = 1;
 
-    // 👇 WARM-UP LOGIC
+    // Cooldown map for anomalies
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> anomalyCooldowns;
+    const std::chrono::seconds anomalyCooldownDuration(5);
+
     const int warmupFrames = 10;
     int frameCounter = 0;
     utils::log("🕒 Warming up camera...");
@@ -466,28 +635,41 @@ void ProctorEngine::monitorLoop() {
 
             utils::log("Detected faces (frame " + std::to_string(frameCounter) + "): " + std::to_string(faceCount));
 
-            // ⏳ Skip event emission during warm-up
             if (frameCounter <= warmupFrames) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 continue;
             }
 
-            if (faceCount != lastFaceCount) {
-                std::string details = (faceCount == 0) ? "No face detected"
-                    : (faceCount > 1) ? "Multiple faces detected: " + std::to_string(faceCount)
-                    : "Face detection normalized";
-            
-                // 👇 ADD THIS CHECK
-                if (details == "StatusIndicator") {
-                    utils::log("⚠️ Ignored frame: StatusIndicator");
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                    continue;
+            std::string details;
+            std::string eventType = "info";
+
+            if (faceCount == 0) {
+                details = "No face detected";
+                eventType = "anomaly";
+            } else if (faceCount > 1) {
+                details = "Multiple faces detected: " + std::to_string(faceCount);
+                eventType = "anomaly";
+            } else {
+                details = "Face detection normalized";
+            }
+
+            bool shouldEmit = true;
+
+            if (eventType == "anomaly") {
+                auto now = std::chrono::steady_clock::now();
+                auto it = anomalyCooldowns.find(details);
+                if (it != anomalyCooldowns.end() && now - it->second < anomalyCooldownDuration) {
+                    utils::log("⏳ Cooldown active for: " + details);
+                    shouldEmit = false;
+                } else {
+                    anomalyCooldowns[details] = now; // Update cooldown
                 }
-            
-                std::string eventType = (faceCount == 1) ? "info" : "anomaly";
-                ProctorEvent faceEvent{ userId_, examId_, eventType, utils::getCurrentTimestamp(), details };
+            }
+
+            if (shouldEmit) {
+                ProctorEvent faceEvent{userId_, examId_, eventType, utils::getCurrentTimestamp(), details};
                 lastFaceCount = faceCount;
-            
+
                 if (eventEmitter_) {
                     eventEmitter_->emitEvent(faceEvent);
                     utils::log("📤 [Face JSON] " + utils::formatEventJson(
@@ -497,19 +679,20 @@ void ProctorEngine::monitorLoop() {
 
             std::string newTitle;
             if (screenMonitor_.detectScreenChange(newTitle)) {
-                utils::log("Active window changed from: " + lastWindowTitle + " → " + newTitle);
-                lastWindowTitle = newTitle;
-
-                ProctorEvent screenEvent{ userId_, examId_, "anomaly", utils::getCurrentTimestamp(), newTitle };
-                if (eventEmitter_) {
-                    eventEmitter_->emitEvent(screenEvent);
-                    utils::log("📤 [Window JSON] " + utils::formatEventJson(
-                        screenEvent.userId, screenEvent.examId, screenEvent.eventType, screenEvent.details));
+                if (newTitle != lastWindowTitle) {
+                    lastWindowTitle = newTitle;
+                    ProctorEvent screenEvent{userId_, examId_, "anomaly", utils::getCurrentTimestamp(), newTitle};
+                    if (eventEmitter_) {
+                        eventEmitter_->emitEvent(screenEvent);
+                        utils::log("📤 [Window JSON] " + utils::formatEventJson(
+                            screenEvent.userId, screenEvent.examId, screenEvent.eventType, screenEvent.details));
+                    }
                 }
             }
 
             consecutiveFailures = 0;
             std::this_thread::sleep_for(std::chrono::seconds(1));
+
         } catch (const std::exception& e) {
             utils::log("Error in monitor loop: " + std::string(e.what()));
             if (++consecutiveFailures >= MAX_FAILURES) {
@@ -525,6 +708,8 @@ void ProctorEngine::monitorLoop() {
         }
     }
 }
+
+
 
 void ProctorEngine::handleGracefulShutdown() {
     stop();
