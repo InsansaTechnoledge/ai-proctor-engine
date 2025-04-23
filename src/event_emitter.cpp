@@ -55,9 +55,9 @@ void EventEmitter::emitEvent(const ProctorEvent& event) {
     };
 
     std::cout << eventData.dump() << std::endl; // <-- 🔥 IMPORTANT
-
+    std::cout.flush();
     // utils::log("📤 Emitting JSON Event:\n" + eventData.dump(4));
-}
+}   
 
 // void EventEmitter::processEventQueue() {
 //     while (running_) {
@@ -135,11 +135,13 @@ void EventEmitter::processEventQueue() {
 
         // 🔥 Send the JSON to backend over HTTP
         std::cout<<"this is final data 😩" << eventData.dump();
+        std::cout.flush();
         send_event_to_backend(url_, eventData.dump());
 
         auto emitEnd = std::chrono::steady_clock::now();
         std::cout << "[EMIT THREAD] (" 
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(emitEnd - emitStart).count() 
-                  << "ms) " << eventData.dump(2) << std::endl;
+        << std::chrono::duration_cast<std::chrono::milliseconds>(emitEnd - emitStart).count() 
+        << "ms) " << eventData.dump(2) << std::endl;
+        std::cout.flush(); 
     }
 }
