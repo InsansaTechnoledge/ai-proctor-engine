@@ -9,6 +9,7 @@
 FaceDetector::FaceDetector() : isRunning_(false) {}
 
 FaceDetector::~FaceDetector() {
+    utils::log("🧹 FaceDetector destructor called.");
     stopCapture();
     utils::log("🧹 FaceDetector destructor complete.");
 }
@@ -154,6 +155,8 @@ void FaceDetector::stopCapture() {
 
     if (capture_.isOpened()) {
         capture_.release();
+        cv::destroyAllWindows();  
+        utils::log("⚠️ Releasing camera...");// Close any OpenCV windows
     }
 
     utils::log("🛑 Face detector stopped and cleaned up.");
