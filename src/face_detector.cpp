@@ -17,27 +17,76 @@ FaceDetector::~FaceDetector() {
 #include <fstream>
 
 
+// bool FaceDetector::initialize(const std::string& binaryPath) {
+//     utils::log("🔥 [DEBUG] Entered FaceDetector::initialize()");
+
+//     try {
+//         // Start from where the binary is
+//         std::filesystem::path execDir = std::filesystem::path(binaryPath).parent_path();
+//         utils::log("🧭 Binary located at: " + execDir.string());
+
+//         // std::string crossPlatformModelPath = _WIN32 ? "models" : "ai-proctor-engine/models";
+//         std::string crossPlatformModelPath;
+//             #ifdef _WIN32
+//                 crossPlatformModelPath = "models";
+//             #else
+//                 crossPlatformModelPath = "ai-proctor-engine/models";
+//             #endif
+
+//         // Climb up from electron/bin/mac → electron/bin → electron → gyapak-test-series → ai-proctor-engine/models
+//         std::filesystem::path modelDir = execDir.parent_path().parent_path() / crossPlatformModelPath;
+//         modelDir = std::filesystem::weakly_canonical(modelDir);
+//         utils::log("📂 Resolved model directory: " + modelDir.string());
+
+//         std::string protoPath = (modelDir / "deploy.prototxt").string();
+//         std::string modelPath = (modelDir / "res10_300x300_ssd_iter_140000.caffemodel").string();
+
+//         utils::log("📂 Checking model files:");
+//         utils::log("   Prototxt: " + protoPath);
+//         utils::log("   CaffeModel: " + modelPath);
+
+//         if (!std::filesystem::exists(protoPath)) {
+//             utils::log("❌ Prototxt file NOT FOUND: " + protoPath);
+//             return false;
+//         }
+
+//         if (!std::filesystem::exists(modelPath)) {
+//             utils::log("❌ CaffeModel file NOT FOUND: " + modelPath);
+//             return false;
+//         }
+
+//         utils::log("✅ Model files exist. Loading...");
+
+//         faceNet_ = cv::dnn::readNetFromCaffe(protoPath, modelPath);
+
+//         if (faceNet_.empty()) {
+//             utils::log("❌ OpenCV failed to load the model (network is empty)");
+//             return false;
+//         }
+
+//         utils::log("✅ Face detection model loaded successfully");
+//         return true;
+
+//     } catch (const std::exception& e) {
+//         utils::log("❌ Exception in FaceDetector initialization: " + std::string(e.what()));
+//         return false;
+//     }
+// }
+
 bool FaceDetector::initialize(const std::string& binaryPath) {
     utils::log("🔥 [DEBUG] Entered FaceDetector::initialize()");
 
     try {
-        // Start from where the binary is
+        // Get the directory where the binary is located
         std::filesystem::path execDir = std::filesystem::path(binaryPath).parent_path();
         utils::log("🧭 Binary located at: " + execDir.string());
 
-        // std::string crossPlatformModelPath = _WIN32 ? "models" : "ai-proctor-engine/models";
-        std::string crossPlatformModelPath;
-            #ifdef _WIN32
-                crossPlatformModelPath = "models";
-            #else
-                crossPlatformModelPath = "ai-proctor-engine/models";
-            #endif
-
-        // Climb up from electron/bin/mac → electron/bin → electron → gyapak-test-series → ai-proctor-engine/models
-        std::filesystem::path modelDir = execDir.parent_path().parent_path() / crossPlatformModelPath;
+        // Models are inside the same directory as binary in 'models' subfolder
+        std::filesystem::path modelDir = execDir / "models";
         modelDir = std::filesystem::weakly_canonical(modelDir);
         utils::log("📂 Resolved model directory: " + modelDir.string());
 
+        // Build paths to model files
         std::string protoPath = (modelDir / "deploy.prototxt").string();
         std::string modelPath = (modelDir / "res10_300x300_ssd_iter_140000.caffemodel").string();
 
@@ -72,6 +121,7 @@ bool FaceDetector::initialize(const std::string& binaryPath) {
         return false;
     }
 }
+
 
 bool FaceDetector::startCapture() {
     if (isRunning_.exchange(true)) return true;
